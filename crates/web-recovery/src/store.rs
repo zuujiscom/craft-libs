@@ -146,6 +146,15 @@ async fn take_over(
     if plan.load.is_empty() && plan.damaged.is_empty() {
         return Ok(Vec::new());
     }
+    // Read the copies before claiming them: claiming rewrites each entry, and Safari then drops
+    // the file behind the Blob it handed out ("The object can not be found here").
+    let mut contents = Vec::new();
+    for &i in &plan.load {
+        if let (_, _, Some(blob)) = &scanned[i] {
+            let buffer = before(&blob.array_buffer(), deadline).await?;
+            contents.push((i, Uint8Array::new(&buffer).to_vec()));
+        }
+    }
     let tx = db.transaction_with_str_and_mode(ENTRIES, IdbTransactionMode::Readwrite).map_err(js)?;
     let store = tx.object_store(ENTRIES).map_err(js)?;
     for &i in &plan.load {
@@ -159,10 +168,8 @@ async fn take_over(
     committed(&tx, deadline).await?;
 
     let mut found = Vec::new();
-    for i in plan.load {
-        let (key, value, blob) = &scanned[i];
-        let Some(blob) = blob else { continue };
-        let buffer = before(&blob.array_buffer(), deadline).await?;
+    for (i, bytes) in contents {
+        let (key, value, _) = &scanned[i];
         found.push(Recovered {
             key: key.as_string().unwrap_or_default(),
             name: listed[i].name.clone(),
@@ -170,7 +177,7 @@ async fn take_over(
             meta: field(value, "meta").as_string(),
             revision: field(value, "revision").as_f64().unwrap_or(0.0) as u64,
             saved_at: listed[i].saved_at,
-            bytes: Uint8Array::new(&buffer).to_vec(),
+            bytes,
         });
     }
     Ok(found)
