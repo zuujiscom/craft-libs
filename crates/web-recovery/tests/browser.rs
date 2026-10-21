@@ -141,3 +141,24 @@ async fn a_running_tabs_copies_are_left_alone() {
     assert!(b.recovered.is_empty());
     assert_ne!(a.store.session(), b.store.session());
 }
+
+/// The key → bytes map: writes land in order, a reopened map reads them back, a failed delete is
+/// not needed to be tested here.
+#[wasm_bindgen_test]
+async fn kv_keeps_entries_across_a_reopen() {
+    let name = app("kv");
+    let (kv, first) = craft_web_recovery::open_kv(&name, |_| {}).await.unwrap();
+    assert!(first.is_empty());
+    kv.put("a/one", &[1, 2, 3]);
+    kv.put("a/two", &[4]);
+    kv.put("a/one", &[9, 9]);
+    kv.delete("a/two");
+    // Let the queue drain.
+    for _ in 0..50 {
+        sleep(20).await;
+    }
+    assert_eq!(kv.take_error(), None);
+    let (_kv2, again) = craft_web_recovery::open_kv(&name, |_| {}).await.unwrap();
+    assert_eq!(again, vec![("a/one".to_string(), vec![9u8, 9])]);
+}
+

@@ -38,12 +38,16 @@ mod plan;
 #[cfg(target_arch = "wasm32")]
 mod idb;
 #[cfg(target_arch = "wasm32")]
+mod kv;
+#[cfg(target_arch = "wasm32")]
 mod locks;
 #[cfg(target_arch = "wasm32")]
 mod page;
 #[cfg(target_arch = "wasm32")]
 mod store;
 
+#[cfg(target_arch = "wasm32")]
+pub use kv::{ForeignChange, Kv, open_kv};
 #[cfg(target_arch = "wasm32")]
 pub use page::{HiddenHook, UnloadGuard, download};
 #[cfg(target_arch = "wasm32")]
