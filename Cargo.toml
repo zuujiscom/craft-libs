@@ -29,6 +29,7 @@ craft-print = { path = "crates/print" }
 craft-quit = { path = "crates/quit" }
 craft-settings = { path = "crates/settings" }
 craft-ui = { path = "crates/ui" }
+craft-web-recovery = { path = "crates/web-recovery" }
 egui = { version = "0.36", default-features = false }
 rayon = "1"
 serde = { version = "1", features = ["derive"] }

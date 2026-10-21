@@ -1,0 +1,35 @@
+name: Web recovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['crates/web-recovery/**', 'Cargo.toml', 'Cargo.lock', '.github/workflows/web-recovery.yml']
+  pull_request:
+    paths: ['crates/web-recovery/**', 'Cargo.toml', 'Cargo.lock', '.github/workflows/web-recovery.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  web-recovery:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER: wasm-bindgen-test-runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - run: cargo fmt --check
+      - run: cargo clippy -p craft-web-recovery --all-targets --locked -- -D warnings
+      - run: cargo clippy -p craft-web-recovery --all-targets --locked --target wasm32-unknown-unknown -- -D warnings
+      - run: cargo test -p craft-web-recovery --locked
+      - name: Install wasm-bindgen-test-runner
+        run: |
+          runner_version=$(python3 -c 'import tomllib; d=tomllib.load(open("Cargo.lock", "rb")); print(next(p["version"] for p in d["package"] if p["name"] == "wasm-bindgen"))')
+          cargo install wasm-bindgen-cli --version "$runner_version" --locked
+      - name: IndexedDB and Web Locks tests in Chrome
+        run: CHROMEDRIVER=$(which chromedriver) cargo test -p craft-web-recovery --locked --target wasm32-unknown-unknown

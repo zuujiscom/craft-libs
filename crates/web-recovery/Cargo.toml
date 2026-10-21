@@ -1,0 +1,46 @@
+[package]
+name = "craft-web-recovery"
+description = "Crash-recovery copies of unsaved documents in the browser (IndexedDB, one Web Lock per tab), plus the page hooks web builds need around saving."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "0.3"
+log = "0.4"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = [
+  "BeforeUnloadEvent",
+  "Blob",
+  "BlobPropertyBag",
+  "CssStyleDeclaration",
+  "Document",
+  "DomException",
+  "Element",
+  "Event",
+  "EventTarget",
+  "HtmlAnchorElement",
+  "HtmlElement",
+  "IdbCursor",
+  "IdbCursorWithValue",
+  "IdbDatabase",
+  "IdbFactory",
+  "IdbObjectStore",
+  "IdbOpenDbRequest",
+  "IdbRequest",
+  "IdbTransaction",
+  "IdbTransactionMode",
+  "Navigator",
+  "Url",
+  "VisibilityState",
+  "Window",
+] }
+
+[lints]
+workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"
